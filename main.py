@@ -1,6 +1,8 @@
 import json
 import math
+import time
 import matplotlib.pyplot as plt
+import os
 
 def getFuelValue(fuelWeight):
     try:
@@ -45,25 +47,38 @@ def getUserInput():
     }
 
 
-def initializeArmValues():
-    return {
-        'basicEmptyArm' : 5.990,
-        'crewArm' : 2.952,
-        'sideFacingSeatArm' : 3.622,
-        'passengers1And2Arm' : 4.336,
-        'passengers3And4Arm' : 5.612,
-        'beltedToiletSeatArm' : 6.344,
-        'forwardBaggageCompartmentArm' : 1.155,
-        'lhAftCabinetArm' : 6.344,
-        'aftBaggageCompartmentArm' : 7.983
-    }
+def getDefualtValues():
+        try:
+            with open('defaultValues.json','r') as file:
+                data = json.load(file)
+                return data
+        except FileNotFoundError:
+            print("File not found")
+            return None
+        except json.JSONDecodeError:
+            print("Error decoding JSON")
+            return None
 
 
-def initializeWeightValues():
-    return {
-        'basicEmptyWeight' : 3211,
-        'maximumZeroFuelWeight' : 3830,
-    }
+def getValuesFromData(data, key):
+    try:
+        if key in data:
+            return data[key]
+        else:
+            raise Exception("Error getting default values")
+    except Exception as e:
+        print(f"Exception: {e}")
+        return 0
+
+
+def getArmValues():
+    data = getDefualtValues()
+    return getValuesFromData(data, "armValues")
+
+
+def getWeightValues():
+    data = getDefualtValues()
+    return getValuesFromData(data, "weightValues")
 
 
 def calculateMoment(userInformation, weight, arm):
@@ -105,25 +120,24 @@ def calculateCGAndWeight(adjustedZeroFuel, fuelWeight, FuelMoment):
         'arm': arm
     }
 
+
 def calculateCG(arm):
     return (((arm - 5.325) / 1.64) * 100)
 
 
+def graphParameters():
+    data = getDefualtValues()
+    return getValuesFromData(data, "graphLimits")
+
+
 def graphGenerator(graphInformation):
-    limitWeight = [3000, 3220, 4030, 4750, 4750, 4030, 3420, 3000]
-    limitCG = [35.0, 21.5, 21.5, 23.5, 36.9, 38.5, 38.5, 35.0]
-
-    lineAboveWeight = [4430, 4430]
-    lineAboveCG = [22.7 , 37.6]
-
-    sideLineWeight = [3220, 3220, 4030, 4750, 4750]
-    sideLineCG = [21.5, 19.5, 19.5, 21.5, 23.5]
+    graphLimits = graphParameters()
 
     fig, ax = plt.subplots(figsize=(6, 8))
 
-    ax.plot(limitCG, limitWeight, 'k-')
-    ax.plot(lineAboveCG, lineAboveWeight, 'k-')
-    ax.plot(sideLineCG, sideLineWeight, 'k--')
+    ax.plot(graphLimits['limitCG'], graphLimits['limitWeight'], 'k-')
+    ax.plot(graphLimits['lineAboveCG'], graphLimits['lineAboveWeight'], 'k-')
+    ax.plot(graphLimits['sideLineCG'], graphLimits['sideLineWeight'], 'k--')
 
     ax.scatter(graphInformation['takeOffCG'], graphInformation['takeOffWeight'], color='red', zorder=3, label="Take Off")
     ax.scatter(graphInformation['landingCG'], graphInformation['landingWeight'], color='blue', zorder=3, label="Landing")
@@ -138,11 +152,15 @@ def graphGenerator(graphInformation):
     plt.savefig("graph.png", dpi=300, bbox_inches='tight')
 
 
+def clearTerminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-def main():
+
+def cgCalculator():
+    clearTerminal()
     userInformation = getUserInput()
-    weights = initializeWeightValues()
-    arms = initializeArmValues()
+    weights = getWeightValues()
+    arms = getArmValues()
     moments = calculateMoment(userInformation, weights, arms)
     adjustedZeroFuel = calculateAdjustedZeroFuel(userInformation, weights, moments)
     
@@ -157,17 +175,155 @@ def main():
     cgAndWeightLanding = calculateCGAndWeight(adjustedZeroFuel, userInformation['landingFuelWeight'], landingFuelMoment)
     landingCG = calculateCG(cgAndWeightLanding['arm'])
     
-    graphInformation = {
+    cgAndWeghtData = {
         'takeOffCG': takeOffCG,
         'takeOffWeight': cgAndWeightTakeoff['weight'],
         'landingCG': landingCG,
         'landingWeight': cgAndWeightLanding['weight']
     }
 
-    graphGenerator(graphInformation)
+    graphGenerator(cgAndWeghtData)
+    
+    return cgAndWeghtData
 
-    print(f"CG: {takeOffCG:.3f} \nWeight: {cgAndWeightTakeoff['weight']:.3f}") 
-    print(f"\nLanding CG: {landingCG:.3f} \nLanding Weight: {cgAndWeightLanding['weight']:.3f}")
+
+def getFlightReportData():
+    clearTerminal()
+    flightData = {}
+
+    print(" - Flight Data:")
+    flightData["LogBookPage"] = input("\n    Enter the Log Book Page:")
+    flightData["dateFlight"] = input("\n    Enter the date of the flight:")
+    flightData["prefix"] = input("\n    Enter the aircraft prefix:")
+    flightData["model"] = input("\n    Enter the aircraft model:")
+    flightData["operator"] = input("\n    Enter the operator:")
+    flightData["cityOrigin"] = input("\n    Enter the city of origin:")
+    flightData["ICAOOrigin"] = input("\n    Enter the ICAO code of origin:")
+    flightData["cityDestination"] = input("\n    Enter the city of destination:")
+    flightData["ICAODestination"] = input("\n    Enter the ICAO code of destination:")
+    flightData["takeOffHour"] = input("\n    Enter the take off hour:")
+    flightData["landingHour"] = input("\n    Enter the landing hour:")
+    flightData["pilot"] = input("\n    Enter the pilot:")
+    flightData["pilotLicense"] = input("\n    Enter the pilot license:")
+    flightData["copilot"] = input("\n    Enter the copilot:")
+    flightData["copilotLicense"] = input("\n    Enter the copilot license:")
+
+    print("\n - Passengers:")
+    numberOfPassengers = int(input("\n    Enter the number of passengers:"))
+    passengersList = []
+    for i in range(numberOfPassengers):
+        name = input(f"\n    Enter the name of passenger {i + 1}:")
+        document = input(f"\n    Enter the document of passenger {i + 1}:")
+        passengerData = {'name': name, 'document': document}
+        passengersList.append(passengerData)
+    flightData["passengers"] = passengersList
+
+    print("\n - Notes:")
+    flightData["atis"] = input("\n    Enter the Atis:")
+    flightData["rto"] = input("\n    Enter the RTO:")
+    flightData["clearance"] = input("\n    Enter the clearance:")
+
+    return flightData
+
+
+def generateFlightReport():
+    cgAndWeightData = cgCalculator()
+    flightData = getFlightReportData()
+
+    print("\n - Flight Data:")
+
+    for key in flightData:
+        if key == "passengers":
+            print("\n - Passengers:")
+            for passenger in flightData[key]:
+                print(f"    Name: {passenger['name']} - Document: {passenger['document']}")
+        else:
+            if key == "atis":
+                print("\n - Notes:")
+            print(f"    {key}: {flightData[key]}")
+    
+    print("\n - CG and Weight Data:")
+
+    for key in cgAndWeightData:
+        print(f"    {key}: {float(cgAndWeightData[key]):.3f}")
+
+    input("\nPress enter to continue")
+
+
+def changeDefaultValues():
+    clearTerminal()
+
+    print("Enter the new values for the following fields\n  if you want to keep the default value, just press enter")
+    armValues = getArmValues()
+    weightValues = getWeightValues()
+    graphLimits = graphParameters()
+
+    print("\nArm values")
+    for key in armValues:
+        newValue = input(f"{key} ({armValues[key]}): ")
+        if newValue != "":
+            armValues[key] = float(newValue)
+    
+    print("\n\nWeight values")
+    for key in weightValues:
+        newValue = input(f"{key} ({weightValues[key]}): ")
+        if newValue != "":
+            weightValues[key] = float(newValue)
+    
+    print("\n\nGraph values")
+    for key in graphLimits:
+        newValue = input(f"{key} ({graphLimits[key]}): ")
+        if newValue != "":
+            graphLimits[key] = list(map(float, newValue.split()))
+    
+    changedValues = {
+        'armValues': armValues,
+        'weightValues': weightValues,
+        'graphLimits': graphLimits
+    }
+
+    with open("defaultValues.json", "w") as file:
+        json.dump(changedValues, file)
+    
+    print("Values changed successfully")
+    time.sleep(3)
+
+
+def main():
+
+    while 1:
+        clearTerminal()
+        print("\n 1 - Calculate CG\n 2 - Generate flight report\n 3 - Change default values\n 4 - Exit")
+        option = int(input("Enter an option:")) 
+
+        match option:
+            case 1:
+                clearTerminal()
+                print("Calculating CG...")
+                time.sleep(3)
+                cgAndWeightData = cgCalculator()
+                print(f"CG: {cgAndWeightData['takeOffCG']:.3f} \nWeight: {cgAndWeightData['takeOffWeight']:.3f}") 
+                print(f"\nLanding CG: {cgAndWeightData['landingCG']:.3f} \nLanding Weight: {cgAndWeightData['landingWeight']:.3f}")
+                input("\nPress enter to continue")
+            case 2:
+                clearTerminal()
+                print("Flight report generated")
+                generateFlightReport()
+                time.sleep(3)
+            case 3:
+                clearTerminal()
+                print("Default values changed")
+                time.sleep(3)
+                changeDefaultValues()
+            case 4:
+                clearTerminal()
+                print("Exiting...")
+                time.sleep(3)
+                return 0
+            case _:
+                clearTerminal()
+                time.sleep(3)
+                print("Invalid option")
 
 
 if __name__ == "__main__": 
