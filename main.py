@@ -3,6 +3,10 @@ import math
 import time
 import matplotlib.pyplot as plt
 import os
+from pdfEditor import generatePDF
+
+# Criar um dicionario de dados conforme o arquivo de edicao do pdf!!!
+
 
 def getFuelValue(fuelWeight):
     try:
@@ -139,8 +143,8 @@ def graphGenerator(graphInformation):
     ax.plot(graphLimits['lineAboveCG'], graphLimits['lineAboveWeight'], 'k-')
     ax.plot(graphLimits['sideLineCG'], graphLimits['sideLineWeight'], 'k--')
 
-    ax.scatter(graphInformation['takeOffCG'], graphInformation['takeOffWeight'], color='red', zorder=3, label="Take Off")
-    ax.scatter(graphInformation['landingCG'], graphInformation['landingWeight'], color='blue', zorder=3, label="Landing")
+    ax.scatter(graphInformation['takeOffCG'], graphInformation['AirplaneCGAndWeightTakeoff'][1], color='red', zorder=3, label="Take Off")
+    ax.scatter(graphInformation['landingCG'], graphInformation['AirplaneCGAndWeightLanding'][1], color='blue', zorder=3, label="Landing")
 
     ax.set_xlabel("CG POSITION - %MAC")
     ax.set_ylabel("Weight (kg)")
@@ -175,16 +179,29 @@ def cgCalculator():
     cgAndWeightLanding = calculateCGAndWeight(adjustedZeroFuel, userInformation['landingFuelWeight'], landingFuelMoment)
     landingCG = calculateCG(cgAndWeightLanding['arm'])
     
-    cgAndWeghtData = {
-        'takeOffCG': takeOffCG,
-        'takeOffWeight': cgAndWeightTakeoff['weight'],
-        'landingCG': landingCG,
-        'landingWeight': cgAndWeightLanding['weight']
+    tableValues = {
+        'bew': [arms['basicEmptyArm'], weights['basicEmptyWeight'], moments['basicEmptyMoment']],
+        'crew': [arms['crewArm'], userInformation['crewWeight'], moments['crewMoment']],
+        'sideFacingSeat': [arms['sideFacingSeatArm'], userInformation['sideFacingSeatWeight'], moments['sideFacingSeatMoment']],
+        'passengers1And2': [arms['passengers1And2Arm'], userInformation['passengers1And2Weight'], moments['passengers1And2Moment']],
+        'passengers3And4': [arms['passengers3And4Arm'], userInformation['passengers3And4Weight'], moments['passengers3And4Moment']],
+        'beltedToiletSeat': [arms['beltedToiletSeatArm'], userInformation['beltedToiletSeatWeight'], moments['beltedToiletSeatMoment']],
+        'forwardBaggageCompartment': [arms['forwardBaggageCompartmentArm'], userInformation['forwardBaggageCompartmentWeight'], moments['forwardBaggageCompartmentMoment']],
+        'lhAftCabinet': [arms['lhAftCabinetArm'], userInformation['lhAftCabinetWeight'], moments['lhAftCabinetMoment']],
+        'aftBaggageCompartment': [arms['aftBaggageCompartmentArm'], userInformation['aftBaggageCompartmentWeight'], moments['aftBaggageCompartmentMoment']],
+        'maximumZeroFuel': [adjustedZeroFuel['weight']],
+        'adjustedZeroFuel': [adjustedZeroFuel['arm'], adjustedZeroFuel['weight'], adjustedZeroFuel['moment']],
+        'takeOffFuel': [takeOfFuelArm, userInformation['takeOffFuelWeight'], takeOffFuelMoment],
+        'landingFuel': [landingFuelArm, userInformation['landingFuelWeight'], landingFuelMoment],
+        'AirplaneCGAndWeightTakeoff': [cgAndWeightTakeoff['arm'], cgAndWeightTakeoff['weight'], cgAndWeightTakeoff['moment']],
+        'takeOffCG': [takeOffCG],
+        'AirplaneCGAndWeightLanding': [cgAndWeightLanding['arm'], cgAndWeightLanding['weight'], cgAndWeightLanding['moment']],
+        'landingCG': [landingCG],
     }
 
-    graphGenerator(cgAndWeghtData)
+    graphGenerator(tableValues)
     
-    return cgAndWeghtData
+    return tableValues
 
 
 def getFlightReportData():
@@ -218,35 +235,23 @@ def getFlightReportData():
         passengersList.append(passengerData)
     flightData["passengers"] = passengersList
 
+    tableValues = cgCalculator()
+    flightData["tableValues"] = tableValues
+
     print("\n - Notes:")
-    flightData["atis"] = input("\n    Enter the Atis:")
-    flightData["rto"] = input("\n    Enter the RTO:")
-    flightData["clearance"] = input("\n    Enter the clearance:")
+    notes = {}
+    notes["atis"] = input("\n    Enter the Atis:")
+    notes["rto"] = input("\n    Enter the RTO:")
+    notes["clearance"] = input("\n    Enter the clearance:")
+
+    flightData["notes"] = notes
 
     return flightData
 
 
 def generateFlightReport():
-    cgAndWeightData = cgCalculator()
     flightData = getFlightReportData()
-
-    print("\n - Flight Data:")
-
-    for key in flightData:
-        if key == "passengers":
-            print("\n - Passengers:")
-            for passenger in flightData[key]:
-                print(f"    Name: {passenger['name']} - Document: {passenger['document']}")
-        else:
-            if key == "atis":
-                print("\n - Notes:")
-            print(f"    {key}: {flightData[key]}")
-    
-    print("\n - CG and Weight Data:")
-
-    for key in cgAndWeightData:
-        print(f"    {key}: {float(cgAndWeightData[key]):.3f}")
-
+    generatePDF(flightData)
     input("\nPress enter to continue")
 
 
@@ -302,8 +307,8 @@ def main():
                 print("Calculating CG...")
                 time.sleep(3)
                 cgAndWeightData = cgCalculator()
-                print(f"CG: {cgAndWeightData['takeOffCG']:.3f} \nWeight: {cgAndWeightData['takeOffWeight']:.3f}") 
-                print(f"\nLanding CG: {cgAndWeightData['landingCG']:.3f} \nLanding Weight: {cgAndWeightData['landingWeight']:.3f}")
+                print(f"CG: {cgAndWeightData['takeOffCG']:.3f} \nWeight: {cgAndWeightData['AirplaneCGAndWeightTakeoff'][1]:.3f}") 
+                print(f"\nLanding CG: {cgAndWeightData['landingCG']:.3f} \nLanding Weight: {cgAndWeightData['AirplaneCGAndWeightLanding'][1]:.3f}")
                 input("\nPress enter to continue")
             case 2:
                 clearTerminal()
