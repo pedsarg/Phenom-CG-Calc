@@ -1,0 +1,61 @@
+{
+    "armValues": {
+        "basic_empty_arm": 5.99,
+        "crew_arm": 2.952,
+        "side_facing_seat_arm": 3.622,
+        "passengers_1_and_2_arm": 4.336,
+        "passengers_3_and_4_arm": 5.612,
+        "belted_toilet_seat_arm": 6.344,
+        "forward_baggage_compartment_arm": 1.155,
+        "lh_aft_cabinet_arm": 6.344,
+        "aft_baggage_compartment_arm": 7.983
+    },
+    "weightValues": {
+        "basic_empty_weight": 3211,
+        "maximum_zero_fuel_weight": 3830
+    },
+    "graphLimits": {
+        "limit_weight": [
+            3000,
+            3220,
+            4030,
+            4750,
+            4750,
+            4030,
+            3420,
+            3000
+        ],
+        "limit_cg": [
+            35.0,
+            21.5,
+            21.5,
+            23.5,
+            36.9,
+            38.5,
+            38.5,
+            35.0
+        ],
+        "line_above_weight": [
+            4430,
+            4430
+        ],
+        "line_above_cg": [
+            22.7,
+            37.6
+        ],
+        "side_line_weight": [
+            3220,
+            3220,
+            4030,
+            4750,
+            4750
+        ],
+        "side_line_cg": [
+            21.5,
+            19.5,
+            19.5,
+            21.5,
+            23.5
+        ]
+    }
+}
